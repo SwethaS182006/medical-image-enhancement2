@@ -1,38 +1,73 @@
-# EHR Data Visualization for Inpatient Readmission Analysis
+# React + TypeScript + Vite
 
-Hi! This project is all about exploring a simulated Electronic Health Record (EHR) dataset to understand patterns behind inpatient readmissions. I used Python to clean the data, encode categorical variables, and create visualizations that highlight key relationships in the dataset.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## What This Project Does
+Currently, two official plugins are available:
 
-- It loads a CSV file with patient data, including age, gender, diagnosis codes, lab results, and readmission status.
-- It cleans and transforms the data so it's ready for analysis.
-- It creates four visualizations to help us understand how different factors relate to readmission risk:
-  - A correlation heatmap
-  - An age distribution plot
-  - A scatter plot of risk score vs. length of stay
-  - A box plot comparing procedures between readmitted and non-readmitted patients
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Dataset Used
+## React Compiler
 
-**File:** `Simulated_Inpatient_Readmission_Dataset.csv`  
-This dataset includes:
-- Patient demographics (Age, Gender)
-- Clinical metrics (Risk Score, Length of Stay, Number of Procedures)
-- Diagnosis codes and lab abnormalities
-- Readmission status within 30 days
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## How the Code Works
+## Expanding the ESLint configuration
 
-1. I start by loading the dataset using pandas.
-2. Then I clean up missing values and convert categorical columns like gender and readmission status into numeric format.
-3. I use one-hot encoding to handle diagnosis codes and lab abnormalities.
-4. I select the numeric columns and create a 2x2 grid of plots using matplotlib and seaborn.
-5. Finally, I display all the plots together so we can visually explore the data.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## How to Run It
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-1. Make sure you have Python 3.7 or higher installed.
-2. Install the required libraries:
-   ```bash
-   pip install pandas numpy matplotlib seaborn
-python ehr_visualization.py
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
