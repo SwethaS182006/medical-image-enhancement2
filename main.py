@@ -1,70 +1,52 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse
-import cv2
-import numpy as np
-from skimage.metrics import peak_signal_noise_ratio as psnr, structural_similarity as ssim
-import tempfile
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import random
 
-app = FastAPI()
+app = FastAPI()  # ✅ This line is critical
 
-# Endpoint 1: Enhance image and return metrics
-@app.post("/enhance_image")
-async def enhance_image(file: UploadFile = File(...)):
-    # Save uploaded file temporarily
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-        tmp.write(await file.read())
-        tmp_path = tmp.name
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # Load grayscale image
-    original = cv2.imread(tmp_path, cv2.IMREAD_GRAYSCALE)
-    if original is None:
-        return JSONResponse(status_code=400, content={"error": "Invalid image file"})
+class NoteRequest(BaseModel):
+    name: str
+    age: int
+    findings: list[str]
 
-    # Denoise
-    denoised = cv2.fastNlMeansDenoising(original, None, h=10, templateWindowSize=7, searchWindowSize=21)
+class ICDRequest(BaseModel):
+    text: str
 
-    # Sharpen
-    kernel = np.array([[0, -1, 0],
-                       [-1, 5, -1],
-                       [0, -1, 0]])
-    enhanced = cv2.filter2D(denoised, -1, kernel)
+@app.get("/")
+def root():
+    return {"message": "Backend is running!"}
 
-    # Metrics
-    psnr_value = psnr(original, enhanced)
-    ssim_value = ssim(original, enhanced, data_range=enhanced.max() - enhanced.min())
-
-    # Save enhanced image
-    output_path = tmp_path.replace(".png", "_enhanced.png")
-    cv2.imwrite(output_path, enhanced)
-
+@app.get("/dashboard")
+def get_dashboard():
     return {
-        "psnr": round(psnr_value, 2),
-        "ssim": round(ssim_value, 4),
-        "enhanced_image_path": output_path
+        "images_enhanced": 136,
+        "notes_generated": 67,
+        "icd_codes": 40,
+        "active_patients": 6,
+        "uptime": "98%"
     }
 
-# Endpoint 2: Generate clinical note from findings
-@app.post("/generate_note")
-async def generate_note_endpoint(findings: dict):
-    note = (
-        f"Clinical Imaging Report:\n"
-        f"- Ventricular Status: {findings.get('ventricles', 'N/A')}\n"
-        f"- Lesion Presence: {findings.get('lesion', 'N/A')}\n"
-        f"- Cortical Thickness: {findings.get('cortex', 'N/A')}\n\n"
-        f"Impression: {findings.get('suggested_diagnosis', 'N/A')}\n"
-        f"Recommendation: Recommend follow-up with neurology and CSF flow study.\n"
-    )
-    return {"note": note}
+@app.post("/generate-note")
+def generate_note(req: NoteRequest):
+    return {"note": f"SOAP Note for {req.name}"}
 
-# Endpoint 3: Map diagnosis to ICD-10 code
-@app.post("/map_icd10")
-async def map_icd10_endpoint(diagnosis: str):
-    icd_map = {
-        "hydrocephalus": "G91.9",
-        "brain tumor": "D43.2",
-        "normal": "Z00.00"
-    }
-    for key in icd_map:
-        if key in diagnosis.lower():
-            return {"icd_code": icd_map[key]}
-    return {"icd_code": "R99"}  # Unknown or unspecified diagnosis
+@app.post("/suggest-icd")
+def suggest_icd(req: ICDRequest):
+    codes = ["J45.909", "E11.9", "I10"]
+    return {"suggestions": [{"code": code, "confidence": 0.9} for code in codes]}
+
+@app.get("/patients")
+def get_patients():
+    return [
+        {"id": "P001", "name": "Dr. Saadhana", "age": 45},
+        {"id": "P002", "name": "John Smith", "age": 30},
+        {"id": "P003", "name": "Emma Johnson", "age": 28}
+    ]
